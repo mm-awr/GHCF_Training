@@ -13,6 +13,9 @@ document.addEventListener("DOMContentLoaded", () => {
       // Clear loading message
       activitiesList.innerHTML = "";
 
+      // Clear and repopulate dropdown (keep placeholder option)
+      activitySelect.innerHTML = "<option value=\"\">-- Select an activity --</option>";
+
       // Populate activities list
       Object.entries(activities).forEach(([name, details]) => {
         const activityCard = document.createElement("div");
@@ -25,7 +28,25 @@ document.addEventListener("DOMContentLoaded", () => {
           <p>${details.description}</p>
           <p><strong>Schedule:</strong> ${details.schedule}</p>
           <p><strong>Availability:</strong> ${spotsLeft} spots left</p>
+          <div class="participants-section">
+            <p><strong>Participants:</strong></p>
+            <ul class="participants-list"></ul>
+          </div>
         `;
+
+        const list = activityCard.querySelector(".participants-list");
+        if (details.participants.length) {
+          details.participants.forEach(email => {
+            const displayName = email.split("@")[0]
+              .replace(/[._-]/g, " ")
+              .replace(/\b\w/g, c => c.toUpperCase());
+            const li = document.createElement("li");
+            li.innerHTML = `<span class="participant-name">${displayName}</span><button class="delete-participant" title="Unregister ${displayName}" data-activity="${name}" data-email="${email}">&#x1F5D1;</button>`;
+            list.appendChild(li);
+          });
+        } else {
+          list.innerHTML = "<li class='no-participants'>No participants yet</li>";
+        }
 
         activitiesList.appendChild(activityCard);
 
@@ -62,6 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities();
       } else {
         messageDiv.textContent = result.detail || "An error occurred";
         messageDiv.className = "error";
@@ -78,6 +100,31 @@ document.addEventListener("DOMContentLoaded", () => {
       messageDiv.className = "error";
       messageDiv.classList.remove("hidden");
       console.error("Error signing up:", error);
+    }
+  });
+
+  // Handle unregister clicks
+  activitiesList.addEventListener("click", async (event) => {
+    const btn = event.target.closest(".delete-participant");
+    if (!btn) return;
+
+    const activity = btn.dataset.activity;
+    const email = btn.dataset.email;
+
+    try {
+      const response = await fetch(
+        `/activities/${encodeURIComponent(activity)}/signup?email=${encodeURIComponent(email)}`,
+        { method: "DELETE" }
+      );
+
+      if (response.ok) {
+        fetchActivities();
+      } else {
+        const result = await response.json();
+        alert(result.detail || "Failed to unregister participant.");
+      }
+    } catch (error) {
+      console.error("Error unregistering participant:", error);
     }
   });
 
