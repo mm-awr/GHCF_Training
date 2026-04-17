@@ -41,7 +41,22 @@ document.addEventListener("DOMContentLoaded", () => {
               .replace(/[._-]/g, " ")
               .replace(/\b\w/g, c => c.toUpperCase());
             const li = document.createElement("li");
-            li.innerHTML = `<span class="participant-name">${displayName}</span><button class="delete-participant" title="Unregister ${displayName}" data-activity="${name}" data-email="${email}">&#x1F5D1;</button>`;
+            
+            const nameSpan = document.createElement("span");
+            nameSpan.className = "participant-name";
+            nameSpan.textContent = displayName;
+
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "delete-participant";
+            deleteButton.ariaLabel = `Unregister ${displayName}`;
+            deleteButton.title = `Unregister ${displayName}`;
+            deleteButton.dataset.activity = name;
+            deleteButton.dataset.email = email;
+            deleteButton.textContent = "\u{1F5D1}";
+
+            li.appendChild(nameSpan);
+            li.appendChild(deleteButton);
+            
             list.appendChild(li);
           });
         } else {
